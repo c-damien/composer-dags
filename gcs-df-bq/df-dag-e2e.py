@@ -78,12 +78,20 @@ DATASET = "composer_demo"
 TABLE_1 = "df_results"
 TABLE_2 = "aggr_results"
 
+
+DF_SOURCE = "gs://demo-settings/composer_sensed_file/df_code/gcs2bq.py"
+DF_PARAM_INPUT = "gs://demo-settings/composer_sensed_file/in/employees.csv"
+DF_PARAM_OUTPUT =  "dataplatformdaydemo:composer_demo.df_results"
+DF_TEMP_LOCATION = "gs://demo-settings/df_tmp"
+DF_JOB_NAME = "gcs2bq_composer"
+
+BQ_LOCATION = 'US'
+
 default_args = {
     # Tell airflow to start one day ago, so that it runs as soon as you upload it
     "start_date": days_ago(1),
     "project_id": PROJECT_ID,
     "region": REGION,
-
 }
 
 # start of the DAG
@@ -107,21 +115,21 @@ with models.DAG(
     df_start_job = BeamRunPythonPipelineOperator(
         task_id="start_df_job_sync",
         runner="DataflowRunner",
-        py_file="gs://demo-settings/composer_sensed_file/df_code/gcs2bq.py",
+        py_file=DF_SOURCE,
         py_options=[],
         pipeline_options={
-            'input':"gs://demo-settings/composer_sensed_file/in/employees.csv",
-            'output': "dataplatformdaydemo:composer_demo.df_results",
+            'input': DF_PARAM_INPUT,
+            'output': DF_PARAM_OUTPUT,
             "autoscaling_algorithm": "THROUGHPUT_BASED",
             "num_workers": 1,
-            "temp_location":"gs://demo-settings/df_tmp",
+            "temp_location" : DF_TEMP_LOCATION,
         },
         py_requirements=['apache-beam[gcp]==2.41.0'],
         py_interpreter='python3',
         py_system_site_packages=False,
         dataflow_config={
-            "job_name": "gcs2bq_composer",
-            "location": 'us-central1',
+            "job_name": DF_JOB_NAME,
+            "location": REGION,
             "wait_until_finished": True, # I m not waiting for the end of the job
         },
     )
@@ -142,7 +150,7 @@ with models.DAG(
                     },
                 }
             },
-            location='US',
+            location=BQ_LOCATION,
     )
 
     #-- move the file to backup
