@@ -1,4 +1,4 @@
-# composer example dags
+# composer dag examples
 Examples of dags for GCP Cloud Composer v2 (Managed Airflow).
 
 sub directory | products| Description |
